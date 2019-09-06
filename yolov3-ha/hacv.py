@@ -36,7 +36,7 @@ class CVMQTTPlugin:
 
     def no_motion(self):
         print("publishing motion OFF");
-        self.client.publish("ha/motion/mqtt", '{"on":"OFF"}')
+        self.client.publish(f"ha/motion/mqtt/{self.name}", '{"on":"OFF"}')
 
     def publish_detection(self, detection_type, likelihood):
         print("Publishing ", detection_type, likelihood)
@@ -45,9 +45,9 @@ class CVMQTTPlugin:
         if self.detects[detection_type] + 10.0 < time.time():
             self.detects[detection_type] = time.time()
             print("publish TTS")
-            self.client.publish("ha/tts/say", "There is a " + detection_type + " in the " + self.name)
+            self.client.publish(f"ha/tts/say/{self.name}", "There is a " + detection_type + " in the " + self.name)
             print("publish Motion")
-            self.client.publish("ha/motion/mqtt", '{"on":"ON", "type":"' + detection_type + '"}')
+            self.client.publish(f"ha/motion/mqtt/{self.name}", '{"on":"ON", "type":"' + detection_type + '"}')
             if self.timer is not None:
                 self.timer.cancel()
             print("Setting up timer for 15 seconds")
@@ -56,7 +56,7 @@ class CVMQTTPlugin:
 
     def publish_image(self, image):
         print("Publishing image.")
-        self.client.publish("ha/camera/mqtt", image)
+        self.client.publish(f"ha/camera/mqtt/{self.name}", image)
 
     def __del__(self):
         self.client.disconnect()
