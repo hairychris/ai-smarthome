@@ -171,9 +171,14 @@ avgframe = frame
 cls = getattr(importlib.import_module(plugin[0]), plugin[1])
 ha_detect = cls(yaml_cfg)
 
-while(1):
+seconds = 0.5
+fps = video.get(cv2.CAP_PROP_FPS) # Gets the frames per second
+multiplier = fps * seconds
+
+while(ret):
+        frameId = int(round(video.get(1)))
         ret, frame = video.read()
-        if ret:
+        if frameId % multiplier == 0:
                 subframe = cv2.subtract(frame, avgframe)
                 grayscaled = cv2.cvtColor(subframe, cv2.COLOR_BGR2GRAY)
                 retval2,th1 = cv2.threshold(grayscaled,35,255,cv2.THRESH_BINARY)
