@@ -46,17 +46,17 @@ class CVMQTTPlugin:
         bsname = self.name + " Motion"
         self.client.publish(
             self.binary_sensor_topic + "/config",
-            {"name": bsname, "unique_id": bsname, "device_class": "motion", "state_topic": self.binary_sensor_state_topic}
+            str({"name": bsname, "unique_id": bsname, "device_class": "motion", "state_topic": self.binary_sensor_state_topic})
         )
         cname = self.name + " Detector"
         self.client.publish(
             self.camera_topic + "/config",
-            {"name": cname, "unique_id": cname, "topic": self.camera_topic}
+            str({"name": cname, "unique_id": cname, "topic": self.camera_topic})
         )
         sname = self.name + " Detector"
         self.client.publish(
             self.sensor_topic + "/config",
-            {"name": sname, "unique_id": sname, "state_topic": self.sensor_state_topic}
+            str({"name": sname, "unique_id": sname, "state_topic": self.sensor_state_topic})
         )
 
     def no_motion(self):
