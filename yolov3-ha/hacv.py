@@ -36,7 +36,7 @@ class CVMQTTPlugin:
         self.sensor_state_topic = self.sensor_topic + "/state"
         self.tts_topic = "homeassistant/tts/say/" + self.name
             
-        self.client = mqttClient.Client("Python-CV-YOLO3")
+        self.client = mqttClient.Client("Python-CV-YOLO3-" + self.name)
         self.client.on_connect = on_connect
         self.client.connect(broker_address)
         self.client.loop_start()
