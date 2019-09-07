@@ -24,19 +24,43 @@ class CVMQTTPlugin:
     detects = {}
 
     def __init__(self, cfg):
-        if cfg is not None:
-            broker_address = cfg['hacv']['host']
-            self.name = cfg['hacv']['name']
-        else:
-            broker_address = "127.0.0.1"
+        if cfg is None:
+            raise Exception('You must load a config file')
+        broker_address = cfg['hacv']['host']
+        self.name = cfg['hacv']['name']
+
+        self.binary_sensor_topic = "homeassistant/binary_sensor/" + self.name
+        self.binary_sensor_state_topic = self.binary_sensor_topic + "/state"
+        self.camera_topic = f"homeassistant/camera/" + self.name
+        self.sensor_topic = "homeassistant/sensor/" + self.name
+        self.sensor_state_topic = self.sensor_topic + "/state"
+        self.tts_topic = "homeassistant/tts/say/" + self.name
+            
         self.client = mqttClient.Client("Python-CV-YOLO3")
         self.client.on_connect = on_connect
         self.client.connect(broker_address)
         self.client.loop_start()
+        self.publish_config()
+
+    def publish_config(self):
+        self.client.publish(
+            self.binary_sensor_topic + "/config",
+            {"name": self.name + " Motion", "device_class": "motion", "state_topic": self.binary_sensor_state_topic}
+        )
+        self.client.publish(
+            self.camera_topic + "/config",
+            {"name": self.name + " Detector", "topic": self.camera_topic}
+        )
+
+        self.client.publish(
+            self.sensor_topic + "/config",
+            {"name": self.name + " Detected", "state_topic": self.sensor_state_topic}
+        )
 
     def no_motion(self):
-        print("publishing motion OFF");
-        self.client.publish(f"ha/motion/mqtt/{self.name}", '{"on":"OFF"}')
+        print("publishing motion OFF")
+        self.client.publish(self.binary_sensor_state_topic, 'OFF')
+        print("publishing")
 
     def publish_detection(self, detection_type, likelihood):
         print("Publishing ", detection_type, likelihood)
@@ -45,18 +69,20 @@ class CVMQTTPlugin:
         if self.detects[detection_type] + 10.0 < time.time():
             self.detects[detection_type] = time.time()
             print("publish TTS")
-            self.client.publish(f"ha/tts/say/{self.name}", "There is a " + detection_type + " in the " + self.name)
-            print("publish Motion")
-            self.client.publish(f"ha/motion/mqtt/{self.name}", '{"on":"ON", "type":"' + detection_type + '"}')
+            self.client.publish(self.tts_topic, "The camera viewing " + self.name + " can see a " + detection_type)
+            print("publish motion ON")
+            self.client.publish(self.binary_sensor_state_topic, 'ON')
+            print("publish detection")
+            self.client.publish(self.sensor_state_topic, detection_type)
             if self.timer is not None:
                 self.timer.cancel()
-            print("Setting up timer for 15 seconds")
-            self.timer = threading.Timer(15, self.no_motion)
+            print("Setting up timer for 10 seconds")
+            self.timer = threading.Timer(10, self.no_motion)
             self.timer.start()
 
     def publish_image(self, image):
         print("Publishing image.")
-        self.client.publish(f"ha/camera/mqtt/{self.name}", image)
+        self.client.publish(self.camera_topic, image)
 
     def __del__(self):
         self.client.disconnect()
